@@ -30,6 +30,13 @@
 
 #define SYSTEM_DEVICE_NAME "sys.name"
 
+#define SYSTEM_BTN_CLICK_ACTION "sys.btn.click"
+#define SYSTEM_BTN_CLICK_NO_ACTION 0x00
+#define SYSTEM_BTN_CLICK_ACTION_NOTIFY 0x01
+
+#define SYSTEM_BTN_PRESS_ACTION "sys.btn.press"
+#define SYSTEM_BTN_RELEASE_ACTION "sys.btn.release"
+
 typedef struct {
     uint8_t comm_mode;
     char *network_ssid;
@@ -38,11 +45,18 @@ typedef struct {
     uint8_t alert_notification;
     uint8_t tag_display_mode;
     char *device_name;
+    uint8_t btn_click_action;
+    uint8_t *btn_hold_action;
+    uint8_t *btn_release_action;
 } settings_t;
 
 extern settings_t settings;
 
 void settings_init(void);
+
+void settings_set_blob(char *key, uint8_t *val, uint8_t len);
+
+uint8_t *settings_get_blob(char *key);
 
 void settings_set_i8(char *key, uint8_t val);
 

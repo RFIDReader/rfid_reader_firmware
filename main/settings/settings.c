@@ -120,7 +120,47 @@ void settings_init() {
             default:
                 ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
         }
+
+        int8_t btn_click_action = SYSTEM_BTN_CLICK_NO_ACTION;
+        err = nvs_get_i8(settings_handle, SYSTEM_BTN_CLICK_ACTION, &btn_click_action);
+        switch (err) {
+            case ESP_OK:
+                settings.btn_click_action = btn_click_action;
+                break;
+            case ESP_ERR_NVS_NOT_FOUND:
+                settings_set_i8(SYSTEM_BTN_CLICK_ACTION, btn_click_action);
+                break;
+            default:
+                ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
+        }
     }
+}
+
+void settings_set_blob(char *key, uint8_t *val, uint8_t len) {
+    uint8_t new_val[len + 1];
+    new_val[0] = len;
+    memcpy(&new_val[1], val, len);
+
+    esp_err_t err = nvs_set_blob(settings_handle, key, new_val, len + 1);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "error writing value %s", esp_err_to_name(err));
+    }
+    if (strcmp(key, SYSTEM_BTN_PRESS_ACTION) == 0) {
+        settings.btn_hold_action = val;
+    } else if (strcmp(key, SYSTEM_BTN_RELEASE_ACTION) == 0) {
+        settings.btn_release_action = val;
+    }
+}
+
+uint8_t *settings_get_blob(char *key) {
+    size_t val_len;
+    esp_err_t err = nvs_get_blob(settings_handle, key, NULL, &val_len);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "error getting value %s", esp_err_to_name(err));
+    }
+    uint8_t *val = (uint8_t *) malloc((val_len) * sizeof(uint8_t));
+    nvs_get_blob(settings_handle, key, val, &val_len);
+    return val;
 }
 
 void settings_set_i8(char *key, uint8_t val) {
