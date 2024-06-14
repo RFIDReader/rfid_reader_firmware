@@ -109,6 +109,9 @@ static void rx_task(void *pvParameters) {
 }
 
 void uart_comm_init(void) {
+    if (uart_is_driver_installed(UART)) {
+        uart_driver_delete(UART);
+    }
     uart_driver_install(UART, BUF_SIZE * 2, 0, 128, &uart2_queue, 0);
     uart_param_config(UART, &uart_config);
     uart_set_pin(UART, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
