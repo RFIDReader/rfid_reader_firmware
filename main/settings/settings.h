@@ -46,7 +46,7 @@ typedef struct {
     uint8_t tag_display_mode;
     char *device_name;
     uint8_t btn_click_action;
-    uint8_t *btn_hold_action;
+    uint8_t *btn_press_action;
     uint8_t *btn_release_action;
 } settings_t;
 

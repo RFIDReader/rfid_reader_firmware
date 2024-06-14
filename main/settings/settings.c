@@ -133,6 +133,46 @@ void settings_init() {
             default:
                 ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
         }
+
+        uint8_t *btn_press_action = (uint8_t *) malloc(255 * sizeof(uint8_t));
+        size_t btn_press_action_size = 5;
+        btn_press_action[0] = 0xFF;
+        btn_press_action[1] = 0x00;
+        btn_press_action[2] = 0x03;
+        btn_press_action[3] = 0x1D;
+        btn_press_action[4] = 0x0C;
+        err = nvs_get_blob(settings_handle, SYSTEM_BTN_PRESS_ACTION, btn_press_action, &btn_press_action_size);
+        switch (err) {
+            case ESP_OK:
+                settings.btn_press_action = btn_press_action;
+                break;
+            case ESP_ERR_NVS_NOT_FOUND:
+                settings_set_blob(SYSTEM_BTN_PRESS_ACTION, btn_press_action, btn_press_action_size);
+                settings.btn_press_action = btn_press_action;
+                break;
+            default:
+                ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
+        }
+
+        uint8_t *btn_release_action = (uint8_t *) malloc(255 * sizeof(uint8_t));
+        size_t btn_release_action_size = 5;
+        btn_release_action[0] = 0xFF;
+        btn_release_action[1] = 0x00;
+        btn_release_action[2] = 0x03;
+        btn_release_action[3] = 0x1D;
+        btn_release_action[4] = 0x0C;
+        err = nvs_get_blob(settings_handle, SYSTEM_BTN_RELEASE_ACTION, btn_release_action, &btn_release_action_size);
+        switch (err) {
+            case ESP_OK:
+                settings.btn_release_action = btn_release_action;
+                break;
+            case ESP_ERR_NVS_NOT_FOUND:
+                settings_set_blob(SYSTEM_BTN_RELEASE_ACTION, btn_release_action, btn_press_action_size);
+                settings.btn_release_action = btn_release_action;
+                break;
+            default:
+                ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
+        }
     }
 }
 
@@ -146,7 +186,7 @@ void settings_set_blob(char *key, uint8_t *val, uint8_t len) {
         ESP_LOGE(TAG, "error writing value %s", esp_err_to_name(err));
     }
     if (strcmp(key, SYSTEM_BTN_PRESS_ACTION) == 0) {
-        settings.btn_hold_action = val;
+        settings.btn_press_action = val;
     } else if (strcmp(key, SYSTEM_BTN_RELEASE_ACTION) == 0) {
         settings.btn_release_action = val;
     }
