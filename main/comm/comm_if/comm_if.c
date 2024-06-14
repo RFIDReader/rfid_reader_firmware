@@ -293,7 +293,7 @@ void comm_if_post(msg_t *msg) {
             }
             case 0xB2: {
                 uint8_t *val;
-                if(data_len != 0) {
+                if (data_len != 0) {
                     val = (uint8_t *) malloc((data_len) * sizeof(uint8_t));
                     for (uint8_t i = 0; i < data_len; ++i) {
                         val[i] = cmd[3 + i];
@@ -321,7 +321,7 @@ void comm_if_post(msg_t *msg) {
             }
             case 0xB3: {
                 uint8_t *val;
-                if(data_len != 0) {
+                if (data_len != 0) {
                     val = (uint8_t *) malloc((data_len) * sizeof(uint8_t));
                     for (uint8_t i = 0; i < data_len; ++i) {
                         val[i] = cmd[3 + i];
@@ -350,7 +350,8 @@ void comm_if_post(msg_t *msg) {
             }
             case 0xFE: {
                 settings_reset();
-                uint8_t factory_reset_data[] = {0xFF, 0x10, 0xAA, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x74, 0x65, 0x63, 0x68, 0xAA, 0x40, 0xAA, 0x01, 0x95, 0xBB, 0x8D, 0x63};
+                uint8_t factory_reset_data[] = {0xFF, 0x10, 0xAA, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x74, 0x65, 0x63,
+                                                0x68, 0xAA, 0x40, 0xAA, 0x01, 0x95, 0xBB, 0x8D, 0x63};
                 msg_t module_factory_reset = {
                         .data = factory_reset_data,
                         .len = 21
