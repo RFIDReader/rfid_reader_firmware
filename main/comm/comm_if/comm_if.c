@@ -267,6 +267,87 @@ void comm_if_post(msg_t *msg) {
                 comm_if_receive(&response);
                 break;
             }
+            case 0xB1: {
+                uint8_t val;
+                if (data_len != 0x00) {
+                    for (uint8_t i = 0; i < data_len; ++i) {
+                        val = cmd[3 + i];
+                    }
+                    settings_set_i8(SYSTEM_BTN_CLICK_ACTION, val);
+                }
+                val = settings_get_i8(SYSTEM_BTN_CLICK_ACTION);
+                response_len = 6;
+                response_data = (uint8_t *) malloc(response_len * sizeof(uint8_t));
+                response_data[0] = header;
+                response_data[1] = 0x01;
+                response_data[2] = code;
+                response_data[3] = 0x00;
+                response_data[4] = 0x00;
+                response_data[5] = (uint8_t) val;
+                msg_t response = {
+                        .data = response_data,
+                        .len = response_len,
+                };
+                comm_if_receive(&response);
+                break;
+            }
+            case 0xB2: {
+                uint8_t *val;
+                if(data_len != 0) {
+                    val = (uint8_t *) malloc((data_len) * sizeof(uint8_t));
+                    for (uint8_t i = 0; i < data_len; ++i) {
+                        val[i] = cmd[3 + i];
+                    }
+                    settings_set_blob(SYSTEM_BTN_PRESS_ACTION, val, data_len);
+                }
+                val = settings_get_blob(SYSTEM_BTN_PRESS_ACTION);
+                uint8_t val_len = val[0];
+                response_len = 5 + val_len;
+                response_data = (uint8_t *) malloc(response_len * sizeof(uint8_t));
+                response_data[0] = header;
+                response_data[1] = val_len;
+                response_data[2] = code;
+                response_data[3] = 0x00;
+                response_data[4] = 0x00;
+                for (uint8_t i = 1; i < val_len; ++i) {
+                    response_data[5 + i] = val[i];
+                }
+                msg_t response = {
+                        .data = response_data,
+                        .len = response_len,
+                };
+                comm_if_receive(&response);
+                break;
+            }
+            case 0xB3: {
+                uint8_t *val;
+                if(data_len != 0) {
+                    val = (uint8_t *) malloc((data_len) * sizeof(uint8_t));
+                    for (uint8_t i = 0; i < data_len; ++i) {
+                        val[i] = cmd[3 + i];
+                    }
+                    settings_set_blob(SYSTEM_BTN_RELEASE_ACTION, val, data_len);
+                }
+                val = settings_get_blob(SYSTEM_BTN_RELEASE_ACTION);
+                uint8_t val_len = val[0];
+                response_len = 5 + val_len;
+                response_data = (uint8_t *) malloc(response_len * sizeof(uint8_t));
+                response_data[0] = header;
+                response_data[1] = val_len;
+                response_data[2] = code;
+                response_data[3] = 0x00;
+                response_data[4] = 0x00;
+                for (uint8_t i = 1; i < val_len; ++i) {
+                    response_data[5 + i] = val[i];
+                }
+                msg_t response = {
+                        .data = response_data,
+                        .len = response_len,
+                };
+                comm_if_receive(&response);
+                break;
+                break;
+            }
             case 0xFE: {
                 settings_reset();
                 uint8_t factory_reset_data[] = {0xFF, 0x10, 0xAA, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x74, 0x65, 0x63, 0x68, 0xAA, 0x40, 0xAA, 0x01, 0x95, 0xBB, 0x8D, 0x63};
