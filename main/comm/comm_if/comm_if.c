@@ -309,8 +309,8 @@ void comm_if_post(msg_t *msg) {
                 response_data[2] = code;
                 response_data[3] = 0x00;
                 response_data[4] = 0x00;
-                for (uint8_t i = 1; i < val_len; ++i) {
-                    response_data[5 + i] = val[i];
+                for (uint8_t i = 0; i < val_len; ++i) {
+                    response_data[5 + i] = val[i + 1];
                 }
                 msg_t response = {
                         .data = response_data,
@@ -337,15 +337,14 @@ void comm_if_post(msg_t *msg) {
                 response_data[2] = code;
                 response_data[3] = 0x00;
                 response_data[4] = 0x00;
-                for (uint8_t i = 1; i < val_len; ++i) {
-                    response_data[5 + i] = val[i];
+                for (uint8_t i = 0; i < val_len; ++i) {
+                    response_data[5 + i] = val[i + 1];
                 }
                 msg_t response = {
                         .data = response_data,
                         .len = response_len,
                 };
                 comm_if_receive(&response);
-                break;
                 break;
             }
             case 0xFE: {
