@@ -14,6 +14,8 @@
 
 uint16_t CalcCRC(uint8_t *msgbuf, uint8_t msglen);
 
+uint8_t GetSubCRC(uint8_t *msgbuf, int msglen);
+
 /**
  * @param rc    return code of the function
  * @param msg   log message

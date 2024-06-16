@@ -29,11 +29,17 @@ void CRC_calcCrc8(uint16_t *crcReg, uint16_t poly, uint16_t u8Data) {
 uint16_t CalcCRC(uint8_t *msgbuf, uint8_t msglen) {
     uint16_t calcCrc = MSG_CRC_INIT;
     uint8_t i;
-    for (i = 0; i < msglen; ++i) {
-        // NOTE: from silion docs it was for (i = 1; i < msglen; ++i) but as per my input command format I'm not taking headers from client
+    for (i = 1; i < msglen; ++i) {
         CRC_calcCrc8(&calcCrc, MSG_CCITT_CRC_POLY, msgbuf[i]);
     }
     return calcCrc;
+}
+
+uint8_t GetSubCRC(uint8_t *msgbuf, int msglen) {
+    int temp = 0;
+    for (int i = 0; i < msglen; i++)
+        temp += msgbuf[i];
+    return (unsigned char) (temp & 0x000000ff);
 }
 
 void rc_chk(int rc, char *msg) {
@@ -53,7 +59,7 @@ void print_hex_arr(uint8_t *array, size_t length) {
 
 void uint8_arr_to_hex_str(uint8_t *data, size_t len, char **hex_str, size_t *hex_str_len) {
     *hex_str_len = len * 2 + 1;
-    *hex_str = (char *)malloc(*hex_str_len);
+    *hex_str = (char *) malloc(*hex_str_len);
     if (*hex_str == NULL) {
         return;
     }
@@ -71,7 +77,7 @@ void hex_str_to_uint8_arr(char *hex_str, size_t hex_str_len, uint8_t **data, siz
     }
 
     *len = hex_str_len / 2;
-    *data = (uint8_t *)malloc(*len);
+    *data = (uint8_t *) malloc(*len);
     if (*data == NULL) {
         return;
     }
