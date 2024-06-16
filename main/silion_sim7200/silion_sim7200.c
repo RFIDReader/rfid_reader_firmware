@@ -9,6 +9,7 @@
 #include "silion_sim7200_status_codes.h"
 #include "comm_if.h"
 #include "tasks_common.h"
+#include "utils.h"
 
 void uart_comm_init(void);
 
@@ -109,56 +110,19 @@ static void rx_task(void *pvParameters) {
 }
 
 void uart_comm_init(void) {
-    if (uart_is_driver_installed(UART)) {
-        uart_driver_delete(UART);
-    }
     uart_driver_install(UART, BUF_SIZE * 2, 0, 128, &uart2_queue, 0);
     uart_param_config(UART, &uart_config);
     uart_set_pin(UART, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_enable_pattern_det_baud_intr(UART, '+', PATTERN_CHR_NUM, 9, 0, 0);
     uart_pattern_queue_reset(UART, 20);
 
-    uint8_t data[] = {0xFF, 0x00, 0x0C, 0x1D, 0x03}; // Get Reader Runtime
-    size_t data_len = 5;
-    uart_write_bytes(UART, data, data_len);
-
-    uint8_t buf[8] = {0};
-    int ret = uart_read_bytes(UART, buf, 8, pdMS_TO_TICKS(33));
-    if (ret != 0) {
-        ESP_LOGE(TAG, "Failed to read data from UART");
-    }
-    uint8_t expect_data[5] = {0xFF, 0x01, 0x0C, 0x00, 0x00};
-    bool result = true;
-    for (int i = 0; i < 5; ++i) {
-        if (buf[i] != expect_data[i]) {
-            result = false;
-            break;
-        }
-    }
-
-    if (result) { // received data matched expected data
-        ESP_LOGI(TAG, "Reader connected at baud rate %d", uart_config.baud_rate);
-        if (uart_config.baud_rate == 115200) {
-            uint8_t cmd[] = {0xFF, 0x14, 0xAA, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x74, 0x65, 0x63, 0x68, 0xAA, 0x40,
-                             0x06, 0x01, 0x00, 0x0E, 0x10, 0x00, 0x0F, 0xBB, 0x79, 0x9F};
-            size_t cmd_len = 25;
-            uart_write_bytes(UART, cmd, cmd_len);
-        }
-        // boot firmware
-        uint8_t boot_firmware[] = {0xFF, 0x00, 0x04, 0x1D, 0x0B};
-        uint8_t boot_firmware_len = 5;
-        uart_write_bytes(UART, boot_firmware, boot_firmware_len);
-    } else {
-        ESP_LOGE(TAG, "Reader did not connect at baud rate %d\nAttempting to connect using baud rate 115200",
-                 uart_config.baud_rate);
-        if (uart_config.baud_rate == 921600) {
-            uart_config.baud_rate = 115200;
-            return uart_comm_init();
-        } else { // uart_config.baud_rate is 115200
-            ESP_LOGE(TAG, "Reader did not connect at baud rate 115200");
-            return;
-        }
-    }
+    // boot firmware
+    uint8_t boot_firmware_data[] = {0xFF, 0x00, 0x04, 0x1D, 0x0B};
+    msg_t boot_firmware = {
+            .data = boot_firmware_data,
+            .len = 5,
+    };
+    uart_comm_write(&boot_firmware);
 
     xTaskCreatePinnedToCore(rx_task,
                             "rx_tsk",
