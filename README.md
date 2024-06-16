@@ -9,7 +9,7 @@ OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README
 
 ### Performance improvements:
 
-##### Increase BaudRate of UART Comm
+##### ✅ Increase BaudRate of UART Comm
 
 ##### ✅ Use 2M PHY for BLE Comm
 
@@ -19,17 +19,17 @@ OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README
 
 ##### ✅ Increase BaudRate of UART Comm
 
-##### [⚠️ Need to test] ✅ Detect Baud Rate of UART Comm
+##### ✅ Detect Baud Rate of UART Comm
 
 ##### ✅ Detect Mac Address of WiFi softAP / WiFi STA / BLE
 
-##### [Working, observed increased performance using 2M PHY] ✅ BLE Comm: 2M PHY Support
+##### ✅ BLE Comm: 2M PHY Support
 
 ##### ✅ WiFi Comm: then resolve IP using mDNS
 
 ##### ✅ Resolve cors error in http server
 
-##### [Done, can set custom action for hold / release of btn] ✅ Scanning on Button Press
+##### ✅ Button Press Actions
 
 ##### ✅ Stop scanning when BLE / WiFi comm disconnects
 
@@ -169,7 +169,7 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | app state dispatcher | ✅      |                                                                       |
 | ble app              | ✅      |                                                                       |
 | comm if              |        | need to group the message before sending, need to add message parsing |
-| http server          | ✅      | need to fix cors error                                                |
+| http server          | ✅      |                                                                       |
 | usb app              |        |                                                                       |
 | wifi app             | ✅      |                                                                       |
 | ota                  |        |                                                                       |
