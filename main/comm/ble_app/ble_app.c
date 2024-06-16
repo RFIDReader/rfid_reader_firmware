@@ -16,6 +16,7 @@
 #include "ble_prph.h"
 #include "utils.h"
 #include "comm_if.h"
+#include "silion_sim7200.h"
 
 static const char TAG[] = "ble_app";
 
@@ -126,13 +127,7 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
                               NULL,
                               0,
                               portMAX_DELAY);
-            /// If the rfid module has successfully started inventory and receives other valid commands, the module will exit continuous inventory and respond with an unsuccessful response containing error code 0xAA49.
-            uint8_t tmp_cmd[] = {0xFF, 0x00, 0x03, 0x1D, 0x0C};
-            msg_t tmp_msg = {
-                    .data = tmp_cmd,
-                    .len = 5,
-            };
-            comm_if_post(&tmp_msg);
+            silion_sim7200_stop_scanning();
             return 0;
 
         case BLE_GAP_EVENT_CONN_UPDATE:

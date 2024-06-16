@@ -13,6 +13,7 @@
 #include "tasks_common.h"
 #include "mdns.h"
 #include "comm_if.h"
+#include "silion_sim7200.h"
 
 static const char TAG[] = "wifi_app";
 
@@ -31,13 +32,6 @@ static void wifi_app_event_handler(void *args, esp_event_base_t event_base, int3
         esp_err_t err;
         int8_t post_event_id = -1;
 
-        /// If the rfid module has successfully started inventory and receives other valid commands, the module will exit continuous inventory and respond with an unsuccessful response containing error code 0xAA49.
-        uint8_t tmp_cmd[] = {0xFF, 0x00, 0x03, 0x1D, 0x0C};
-        msg_t tmp_msg = {
-                .data = tmp_cmd,
-                .len = 5,
-        };
-
         switch (event_id) {
             case WIFI_EVENT_AP_START:
                 ESP_LOGI(TAG, "WIFI_EVENT_AP_START");
@@ -48,19 +42,12 @@ static void wifi_app_event_handler(void *args, esp_event_base_t event_base, int3
             case WIFI_EVENT_AP_STACONNECTED:
                 ESP_LOGI(TAG, "WIFI_EVENT_AP_STACONNECTED");
                 post_event_id = WIFI_APP_CONNECTED;
-                ESP_LOGI(TAG, "STARTING MDNS");
-                err = mdns_init();
-                if (err) {
-                    ESP_LOGE(TAG, "MDNS Init failed: %d\n", err);
-                }
-                mdns_hostname_set(settings.device_name);
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
                 ESP_LOGI(TAG, "WIFI_EVENT_AP_STADISCONNECTED");
                 post_event_id = WIFI_APP_DISCONNECTED;
                 ESP_LOGI(TAG, "STOPPING MDNS");
-                mdns_free();
-                comm_if_post(&tmp_msg);
+                silion_sim7200_stop_scanning();
                 break;
             case WIFI_EVENT_STA_START:
                 ESP_LOGI(TAG, "WIFI_EVENT_STA_START");
@@ -71,18 +58,11 @@ static void wifi_app_event_handler(void *args, esp_event_base_t event_base, int3
             case WIFI_EVENT_STA_CONNECTED:
                 ESP_LOGI(TAG, "WIFI_EVENT_STA_CONNECTED");
                 post_event_id = WIFI_APP_CONNECTED;
-                ESP_LOGI(TAG, "STARTING MDNS");
-                err = mdns_init();
-                if (err) {
-                    ESP_LOGE(TAG, "MDNS Init failed: %d\n", err);
-                }
-                mdns_hostname_set(settings.device_name);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
                 ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
                 post_event_id = WIFI_APP_DISCONNECTED;
-                mdns_free();
-                comm_if_post(&tmp_msg);
+                silion_sim7200_stop_scanning();
                 if (g_connection_retries < MAX_CONNECTION_RETRIES) {
                     uint8_t delay_factor = g_connection_retries / 3;
                     ESP_LOGI(TAG, "Retrying to connect to WiFi in %dms", delay_factor * 250);
@@ -221,4 +201,11 @@ void wifi_app_start(void) {
     };
 
     esp_event_loop_create(&loop_args, &wifi_app_event_handle);
+
+    ESP_LOGI(TAG, "STARTING MDNS");
+    int err = mdns_init();
+    if (err) {
+        ESP_LOGE(TAG, "MDNS Init failed: %d\n", err);
+    }
+    mdns_hostname_set(settings.device_name);
 }
