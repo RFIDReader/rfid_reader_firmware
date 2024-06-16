@@ -2,9 +2,13 @@
 |-------------------|-------|----------|
 
 Bluetooth: https://bluetooth.com
+
 BLE 2M PHY: https://github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/ble_phy/phy_prph/tutorial/Ble_Phy_Peripheral_Example_Walkthrough.md
+
 Deep Sleep: https://github.com/espressif/esp-idf/blob/master/examples/system/deep_sleep/README.md
+
 Real Time Stats: https://github.com/espressif/esp-idf/blob/master/examples/system/freertos/real_time_stats/README.md
+
 OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README.md
 
 ### Performance improvements:
