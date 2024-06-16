@@ -183,3 +183,6 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | silion sim 7200      | ✅      |                                                                       |
 | uart                 | ✅      |                                                                       |
 | www                  |        | need to make ez-controller functional                                 |
+
+set baud rate to 115200: FF 14 AA 4D 6F 64 75 6C 65 74 65 63 68 AA 40 06 01 00 01 C2 00 B4 BB 9D EB 
+set baud rate to 921600: FF 14 AA 4D 6F 64 75 6C 65 74 65 63 68 AA 40 06 01 00 0E 10 00 0F BB 79 9F 
