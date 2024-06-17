@@ -11,6 +11,9 @@ Real Time Stats: https://github.com/espressif/esp-idf/blob/master/examples/syste
 
 OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README.md
 
+BQ27742-G1: https://www.ti.com/lit/ds/symlink/bq27742-g1.pdf
+https://www.ti.com/lit/ug/sluuax0c/sluuax0c.pdf?ts=1718563280100
+
 ### Performance improvements:
 
 ##### ✅ Increase BaudRate of UART Comm
@@ -58,7 +61,7 @@ OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README
 ### Changes:
 
 ##### [⚠️ Antenna Ports config is remaining] ✅ Initialise the reader upon power on (Boot firmware, Baud rate, protocol config, antenna ports)
-Get connected antennas
+Get connected antennas - works with closed loop antennas only 
 Set connected antennas read / write power
 
 ### Programming R&D
