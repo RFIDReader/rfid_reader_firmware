@@ -14,17 +14,15 @@
 #include "wifi_app.h"
 #include "usb_app.h"
 
-TaskHandle_t buzzer_task_handle;
-
 void buzzer_handle_connected() {
     buzzer_on(180);
-    vTaskDelay(pdMS_TO_TICKS(90));
+    vTaskDelay(pdMS_TO_TICKS(270));
     buzzer_on(360);
 }
 
 void buzzer_handle_disconnected() {
     buzzer_on(360);
-    vTaskDelay(pdMS_TO_TICKS(90));
+    vTaskDelay(pdMS_TO_TICKS(450));
     buzzer_on(180);
 }
 
@@ -44,9 +42,8 @@ void beep(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data
     buzzer_on(50);
 }
 
-void buzzer_init() {
+void buzzer_init(void) {
     gpio_set_direction(BUZZER_GPIO, GPIO_MODE_OUTPUT);
-
     esp_event_handler_register_with(app_state_event_handle,
                                     APP_STATE_EVENTS,
                                     APP_STATE_OPERATIONAL,
@@ -90,9 +87,22 @@ void buzzer_init() {
     }
 }
 
-static void delete_buzzer_task() {
-    vTaskDelete(buzzer_task_handle);
-    buzzer_task_handle = NULL;
+void buzzer_deinit() {
+    esp_event_handler_unregister_with(app_state_event_handle, APP_STATE_EVENTS, APP_STATE_OPERATIONAL, beep);
+    if (ble_event_handle) {
+        esp_event_handler_unregister_with(ble_event_handle, BLE_APP_EVENTS, ESP_EVENT_ANY_ID, buzzer_handle_ble_events);
+    } else if (wifi_app_event_handle) {
+        esp_event_handler_unregister_with(wifi_app_event_handle, WIFI_APP_EVENTS, ESP_EVENT_ANY_ID,
+                                          buzzer_handle_wifi_events);
+    } else if (usb_app_event_handle) {
+        esp_event_handler_unregister_with(usb_app_event_handle, USB_APP_EVENTS, ESP_EVENT_ANY_ID,
+                                          buzzer_handle_usb_events);
+    }
+
+    if (settings.alert_notification && comm_event_handle)
+        esp_event_handler_unregister_with(comm_event_handle, COMM_EVENTS, ESP_EVENT_ANY_ID, beep);
+    if (settings.button_notification && button_event_handle)
+        esp_event_handler_unregister_with(button_event_handle, BUTTON_EVENTS, ESP_EVENT_ANY_ID, beep);
 }
 
 static void buzzer_task(void *pvParameter) {
@@ -100,19 +110,19 @@ static void buzzer_task(void *pvParameter) {
     gpio_set_level(BUZZER_GPIO, 1);
     vTaskDelay(pdMS_TO_TICKS(*duration_ms));
     gpio_set_level(BUZZER_GPIO, 0);
-    delete_buzzer_task();
+    vTaskDelete(NULL);
 }
 
 void buzzer_on(uint32_t duration_ms) {
-    delete_buzzer_task();
+    uint32_t *ms = (uint32_t *) malloc(sizeof(uint32_t));
+    *ms = duration_ms;
     xTaskCreatePinnedToCore(buzzer_task,
                             "buzzer_tsk",
                             TEMP_TASK_STACK_SIZE,
-                            (void *) duration_ms,
+                            (void *) ms,
                             TEMP_TASK_PRIORITY,
-                            &buzzer_task_handle,
+                            NULL,
                             TEMP_TASK_CORE_ID);
-
 }
 
 //void play_tone(uint16_t frequency, uint32_t duration_ms) {

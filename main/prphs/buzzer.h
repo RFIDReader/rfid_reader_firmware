@@ -17,7 +17,8 @@
 
 #endif
 
-void buzzer_init(void);
+void buzzer_init(void),
+        buzzer_deinit(void);
 
 void buzzer_on(uint32_t duration_ms);
 
