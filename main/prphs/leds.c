@@ -199,3 +199,21 @@ void leds_init(void) {
                                         NULL);
     }
 }
+
+void leds_deinit(void) {
+    if (ble_event_handle) {
+        esp_event_handler_unregister_with(ble_event_handle,BLE_APP_EVENTS,ESP_EVENT_ANY_ID,leds_handle_ble_events);
+    } else if (wifi_app_event_handle) {
+        esp_event_handler_unregister_with(wifi_app_event_handle,WIFI_APP_EVENTS,ESP_EVENT_ANY_ID,leds_handle_wifi_events);
+    } else if (usb_app_event_handle) {
+        esp_event_handler_unregister_with(usb_app_event_handle,USB_APP_EVENTS,ESP_EVENT_ANY_ID,leds_handle_usb_events);
+    }
+
+    if (settings.alert_notification && comm_event_handle) {
+        esp_event_handler_unregister_with(comm_event_handle,COMM_EVENTS,ESP_EVENT_ANY_ID,leds_handle_comm_events);
+    }
+
+    if (settings.button_notification && button_event_handle) {
+        esp_event_handler_unregister_with(button_event_handle,BUTTON_EVENTS,ESP_EVENT_ANY_ID,leds_handle_btn_events);
+    }
+}
