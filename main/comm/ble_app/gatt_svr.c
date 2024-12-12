@@ -12,10 +12,18 @@
 #include "ble_prph.h"
 #include "comm_if.h"
 #include "utils.h"
+#include "battery.h"
+#include "settings.h"
 
 static uint8_t *le_phy_val;
 static uint16_t gatt_svr_chr_val_handle;
 static uint16_t gatt_svr_manufacturer_name_chr_val_handle;
+static uint16_t gatt_svr_model_num_chr_val_handle;
+static uint16_t gatt_svr_serial_num_chr_val_handle;
+static uint16_t gatt_svr_hardware_rev_chr_val_handle;
+static uint16_t gatt_svr_firmware_rev_chr_val_handle;
+static uint16_t gatt_svr_software_rev_chr_val_handle;
+static uint16_t gatt_svr_system_id_chr_val_handle;
 static uint16_t gatt_svr_tx_power_level_chr_val_handle;
 static uint16_t gatt_svr_battery_level_chr_val_handle;
 static uint16_t gatt_svr_read_chr_val_handle;
@@ -25,37 +33,31 @@ static const char TAG[] = "GATT_SVR";
 
 static int
 //chr_access_le_phy(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
-svr_read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+chr_access_device_name(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+        chr_access_appearance(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+        svr_read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
         svr_write(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
         chr_access_bat_lvl(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
         chr_access_man_name(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+        chr_access_model_num(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+        chr_access_serial_num(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
+        chr_access_hardware_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt,
+                                void *arg),
+        chr_access_firmware_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt,
+                                void *arg),
+        chr_access_software_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt,
+                                void *arg),
+        chr_access_system_id(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg),
         chr_access_tx_pwr_lvl(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-//        {
-//                .type = BLE_GATT_SVC_TYPE_PRIMARY,
-//                .uuid = BLE_UUID16_DECLARE(LE_PHY_UUID16),
-//                .characteristics = (struct ble_gatt_chr_def[])
-//                        {
-//                                {
-//                                        .uuid = BLE_UUID16_DECLARE(LE_PHY_CHR_UUID16),
-//                                        .access_cb = chr_access_le_phy,
-//                                        .val_handle = &gatt_svr_chr_val_handle,
-//                                        .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_WRITE
-//                                                 | BLE_GATT_CHR_F_WRITE_ENC,
-//                                },
-//                                {
-//                                        0, /* No more characteristics in this service. */
-//                                }
-//                        },
-//        },
         {
                 .type = BLE_GATT_SVC_TYPE_PRIMARY,
                 .uuid = BLE_UUID16_DECLARE(BATTERY_UUID16),
                 .characteristics = (struct ble_gatt_chr_def[]) {
                         {
                                 .uuid = BLE_UUID16_DECLARE(BATTERY_LEVEL_CHAR_UUID16),
-                                .flags = BLE_GATT_CHR_F_READ,
+                                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                                 .access_cb = chr_access_bat_lvl,
                                 .val_handle = &gatt_svr_battery_level_chr_val_handle,
                         },
@@ -71,6 +73,42 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                                 .flags = BLE_GATT_CHR_F_READ,
                                 .access_cb = chr_access_man_name,
                                 .val_handle = &gatt_svr_manufacturer_name_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(MODEL_NUM_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_model_num,
+                                .val_handle = &gatt_svr_model_num_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(SERIAL_NUM_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_serial_num,
+                                .val_handle = &gatt_svr_serial_num_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(HARDWARE_REV_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_hardware_rev,
+                                .val_handle = &gatt_svr_hardware_rev_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(FIRMWARE_REV_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_firmware_rev,
+                                .val_handle = &gatt_svr_firmware_rev_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(SOFTWARE_REV_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_software_rev,
+                                .val_handle = &gatt_svr_software_rev_chr_val_handle,
+                        },
+                        {
+                                .uuid = BLE_UUID16_DECLARE(SYSTEM_ID_CHAR_UUID16),
+                                .flags = BLE_GATT_CHR_F_READ,
+                                .access_cb = chr_access_system_id,
+                                .val_handle = &gatt_svr_system_id_chr_val_handle,
                         },
                         {0}, /* No more characteristics in this service. */
                 },
@@ -111,53 +149,6 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 0, /* No more services. */
         },
 };
-
-//static int chr_access_le_phy(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-//    const ble_uuid_t *uuid;
-//    int rand_num;
-//    int rc;
-//    int len;
-//    uint16_t copied_len;
-//    uuid = ctxt->chr->uuid;
-//
-//    /* Determine which characteristic is being accessed by examining its
-//     * 128-bit UUID.
-//     */
-//
-//    if (ble_uuid_cmp(uuid, BLE_UUID16_DECLARE(LE_PHY_CHR_UUID16)) == 0) {
-//        switch (ctxt->op) {
-//            case BLE_GATT_ACCESS_OP_READ_CHR:
-//                rand_num = rand();
-//                rc = os_mbuf_append(ctxt->om, &rand_num, sizeof rand_num);
-//                return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-//
-//            case BLE_GATT_ACCESS_OP_WRITE_CHR:
-//                len = OS_MBUF_PKTLEN(ctxt->om);
-//                if (len > 0) {
-//                    le_phy_val = (uint8_t *) malloc(len * sizeof(uint8_t));
-//                    if (le_phy_val) {
-//                        rc = ble_hs_mbuf_to_flat(ctxt->om, le_phy_val, len, &copied_len);
-//                        if (rc == 0) {
-//                            MODLOG_DFLT(INFO, "Write received of len = %d", copied_len);
-//                            return 0;
-//                        } else {
-//                            MODLOG_DFLT(ERROR, "Failed to receive write characteristic");
-//                        }
-//                    }
-//                }
-//                break;
-//
-//            default:
-//                break;
-//        }
-//    }
-//
-//    /* Unknown characteristic; the nimble stack should not have called this
-//     * function.
-//     */
-//    assert(0);
-//    return BLE_ATT_ERR_UNLIKELY;
-//}
 
 void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
     char buf[BLE_UUID_STR_LEN];
@@ -210,7 +201,9 @@ int gatt_svr_init(void) {
 void gatt_svr_notify(uint16_t conn_handle, msg_t *msg) {
     struct os_mbuf *om = ble_hs_mbuf_from_flat(msg->data, msg->len);
 
-    rc_chk(ble_gatts_notify_custom(conn_handle, gatt_svr_read_chr_val_handle, om), "ble_gatts_notify_custom");
+    rc_chk(ble_gatts_notify_custom(conn_handle, gatt_svr_read_chr_val_handle, om), "ble_gatts_notify_custom", ble_err_to_name);
+
+//    free_msg(msg);
 
     // os_mbuf_free(om); // if done this ESP crashes when second message is sent
 }
@@ -241,13 +234,91 @@ chr_access_bat_lvl(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_a
         return BLE_ATT_ERR_UNLIKELY;
     }
 
-    uint8_t value = 100;
+    uint8_t value = (uint8_t) battery_state.soc;
     os_mbuf_append(ctxt->om, &value, sizeof(value));
     return 0;
 }
 
 static int
 chr_access_man_name(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_model_num(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_serial_num(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_hardware_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_firmware_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_software_rev(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (!ctxt || !ctxt->om) {
+        ESP_LOGE(TAG, "Invalid access context or mbuf");
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+
+    char *manufacturer_name = "pr47h4m";
+    os_mbuf_append(ctxt->om, manufacturer_name, strlen(manufacturer_name));
+
+    return 0;
+}
+
+static int
+chr_access_system_id(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     if (!ctxt || !ctxt->om) {
         ESP_LOGE(TAG, "Invalid access context or mbuf");
         return BLE_ATT_ERR_UNLIKELY;
