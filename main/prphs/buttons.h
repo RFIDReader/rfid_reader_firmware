@@ -41,6 +41,6 @@ enum {
 
 extern esp_event_loop_handle_t button_event_handle;
 
-void buttons_init(void);
+void buttons_init(void), buttons_deinit(void);
 
 #endif //RFID_READER_BUTTONS_H

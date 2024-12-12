@@ -29,34 +29,22 @@ button_config_t scan_btn = {
 
 button_config_t prev_btn = {
         .type = BUTTON_TYPE_GPIO,
-        .gpio_button_config = {
-                .gpio_num = PREV_BTN_GPIO,
-                .active_level = 0,
-        }
+        .gpio_button_config = {PREV_BTN_GPIO, 0}
 };
 
 button_config_t next_btn = {
         .type = BUTTON_TYPE_GPIO,
-        .gpio_button_config = {
-                .gpio_num = NEXT_BTN_GPIO,
-                .active_level = 0,
-        }
+        .gpio_button_config = {NEXT_BTN_GPIO, 0}
 };
 
 button_config_t c_btn = {
         .type = BUTTON_TYPE_GPIO,
-        .gpio_button_config = {
-                .gpio_num = C_BTN_GPIO,
-                .active_level = 0,
-        }
+        .gpio_button_config = {C_BTN_GPIO, 0}
 };
 
 button_config_t ok_btn = {
         .type = BUTTON_TYPE_GPIO,
-        .gpio_button_config = {
-                .gpio_num = OK_BTN_GPIO,
-                .active_level = 0,
-        }
+        .gpio_button_config = {OK_BTN_GPIO, 0}
 };
 
 /// capture pressed and released event
@@ -121,7 +109,7 @@ void buttons_init(void) {
             .queue_size = 10,
             .task_name = "btn_loop",
             .task_priority = uxTaskPriorityGet(NULL),
-            .task_stack_size = 2048,
+            .task_stack_size = 4096,
             .task_core_id = 0,
     };
 
@@ -160,4 +148,21 @@ void buttons_init(void) {
     iot_button_register_cb(c_btn_handle, BUTTON_SINGLE_CLICK, c_btn_cb, (void *) C_BUTTON_PRESSED);
     iot_button_register_cb(ok_btn_handle, BUTTON_SINGLE_CLICK, ok_btn_cb, (void *) OK_BUTTON_PRESSED);
     iot_button_register_cb(ok_btn_handle, BUTTON_LONG_PRESS_START, ok_btn_cb, (void *) OK_BUTTON_HOLD);
+}
+
+void buttons_deinit(void) {
+    iot_button_unregister_cb(scan_btn_handle, BUTTON_SINGLE_CLICK);
+    iot_button_unregister_cb(scan_btn_handle, BUTTON_LONG_PRESS_START);
+    iot_button_unregister_cb(scan_btn_handle, BUTTON_LONG_PRESS_UP);
+    iot_button_unregister_cb(prev_btn_handle, BUTTON_SINGLE_CLICK);
+    iot_button_unregister_cb(next_btn_handle, BUTTON_SINGLE_CLICK);
+    iot_button_unregister_cb(c_btn_handle, BUTTON_SINGLE_CLICK);
+    iot_button_unregister_cb(ok_btn_handle, BUTTON_SINGLE_CLICK);
+    iot_button_unregister_cb(ok_btn_handle, BUTTON_LONG_PRESS_START);
+
+    iot_button_delete(scan_btn_handle);
+    iot_button_delete(prev_btn_handle);
+    iot_button_delete(next_btn_handle);
+    iot_button_delete(c_btn_handle);
+    iot_button_delete(ok_btn_handle);
 }
