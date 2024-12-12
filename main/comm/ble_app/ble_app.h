@@ -27,6 +27,7 @@ enum {
 extern esp_event_loop_handle_t ble_event_handle;
 
 void ble_app_init(void),
-        ble_app_send_msg(msg_t *msg);
+        ble_app_send_msg(msg_t *msg),
+        ble_app_deinit(void);
 
 #endif //RFID_READER_BLE_APP_H

@@ -15,9 +15,12 @@ struct ble_gatt_register_ctxt;
 
 #define DEVICE_INFO_UUID16            0x180A
 #define MANUFACTURER_NAME_CHAR_UUID16 0x2A29
-
-#define LE_PHY_UUID16                 0xABF2
-#define LE_PHY_CHR_UUID16             0xABF3
+#define MODEL_NUM_CHAR_UUID16         0x2A24
+#define SERIAL_NUM_CHAR_UUID16        0x2A25
+#define HARDWARE_REV_CHAR_UUID16      0x2A27
+#define FIRMWARE_REV_CHAR_UUID16      0x2A26
+#define SOFTWARE_REV_CHAR_UUID16      0x2A28
+#define SYSTEM_ID_CHAR_UUID16         0x2A23
 
 #define TX_POWER_UUID16               0x1804
 #define TX_POWER_LEVEL_CHAR_UUID16    0x2A07

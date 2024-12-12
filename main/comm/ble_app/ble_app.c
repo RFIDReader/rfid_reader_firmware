@@ -8,15 +8,14 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
-#include "services/gatt/ble_svc_gatt.h"
 
 #include "ble_app.h"
 #include "settings.h"
 #include "tasks_common.h"
 #include "ble_prph.h"
 #include "utils.h"
-#include "comm_if.h"
 #include "silion_sim7200.h"
+#include "app_state_disp.h"
 
 static const char TAG[] = "ble_app";
 
@@ -43,14 +42,15 @@ void host_task(void *param) {
 }
 
 static void on_sync() {
-    rc_chk(ble_svc_gap_device_name_set(settings.device_name), "ble_svc_gap_device_name_set");
-    rc_chk(ble_hs_util_ensure_addr(0), "ble_hs_util_ensure_addr");
-    rc_chk(ble_hs_id_infer_auto(0, &own_addr_type), "ble_hs_id_infer_auto");
+    rc_chk(ble_svc_gap_device_name_set(settings.device_name), "ble_svc_gap_device_name_set", ble_err_to_name);
+    rc_chk(ble_svc_gap_device_appearance_set(0x0341), "ble_svc_gap_device_appearance_set", ble_err_to_name);
+    rc_chk(ble_hs_util_ensure_addr(0), "ble_hs_util_ensure_addr", ble_err_to_name);
+    rc_chk(ble_hs_id_infer_auto(0, &own_addr_type), "ble_hs_id_infer_auto", ble_err_to_name);
 
 #ifdef USE_2M_PHY
     s_current_phy = BLE_HCI_LE_PHY_1M_PREF_MASK;
-    uint8_t prefered_phy = BLE_HCI_LE_PHY_1M_PREF_MASK; // | BLE_HCI_LE_PHY_1M_PREF_MASK | BLE_HCI_LE_PHY_CODED_PREF_MASK;
-    rc_chk(ble_gap_set_prefered_default_le_phy(prefered_phy, prefered_phy), "ble_gap_set_prefered_default_le_phy");
+    uint8_t prefered_phy = BLE_HCI_LE_PHY_2M_PREF_MASK; // | BLE_HCI_LE_PHY_1M_PREF_MASK | BLE_HCI_LE_PHY_CODED_PREF_MASK;
+    rc_chk(ble_gap_set_prefered_default_le_phy(prefered_phy, prefered_phy), "ble_gap_set_prefered_default_le_phy", ble_err_to_name);
 #endif
 
     ble_app_advertise();
@@ -70,22 +70,25 @@ static void ble_app_advertise() {
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    uint8_t mfg_data[] = {'p', 'r', '4', '7', 'h', '4', 'm'};
-    fields.mfg_data = mfg_data;
-    fields.mfg_data_len = 7;
+//    uint8_t mfg_data[] = {'p', 'r', '4', '7', 'h', '4', 'm'};
+//    fields.mfg_data = mfg_data;
+//    fields.mfg_data_len = 7;
 
     fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
 
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
     fields.tx_pwr_lvl_is_present = 1;
 
-//    fields.uuids16 = (ble_uuid16_t[]) {
-//            BLE_UUID16_INIT(DEVICE_INFO_UUID16)
-//    };
-//    fields.num_uuids16 = 1;
-//    fields.uuids16_is_complete = 1;
+    fields.appearance = 0x0341;
+    fields.appearance_is_present = 1;
 
-    rc_chk(ble_gap_adv_set_fields(&fields), "ble_gap_adv_set_fields");
+    fields.uuids16 = (ble_uuid16_t[]) {
+            BLE_UUID16_INIT(DEVICE_INFO_UUID16)
+    };
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
+
+    rc_chk(ble_gap_adv_set_fields(&fields), "ble_gap_adv_set_fields", ble_err_to_name);
 
     // GAP - device connectivity definition
     struct ble_gap_adv_params adv_params;
@@ -94,7 +97,7 @@ static void ble_app_advertise() {
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
-    rc_chk(ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER, &adv_params, gap_event, NULL), "ble_gap_adv_start");
+    rc_chk(ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER, &adv_params, gap_event, NULL), "ble_gap_adv_start", ble_err_to_name);
 }
 
 static int gap_event(struct ble_gap_event *event, void *arg) {
@@ -105,16 +108,18 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
             ESP_LOGI(TAG, "connection %s", event->connect.status == 0 ? "established" : "failed");
             if (event->connect.status == 0) {
                 conn_handle = event->connect.conn_handle;
-                rc_chk(ble_gap_conn_find(event->connect.conn_handle, &desc), "ble_gap_conn_find");
+                rc_chk(ble_gap_conn_find(event->connect.conn_handle, &desc), "ble_gap_conn_find", ble_err_to_name);
                 esp_event_post_to(ble_event_handle,
                                   BLE_APP_EVENTS,
                                   BLE_EVENT_CONNECTED,
                                   NULL,
                                   0,
                                   portMAX_DELAY);
+                app_state_set_comm_idle_status(false);
             } else {
                 ESP_LOGE(TAG, "connection failed");
                 ble_app_advertise();
+                app_state_set_comm_idle_status(true);
             }
             return 0;
 
@@ -128,11 +133,12 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
                               0,
                               portMAX_DELAY);
             silion_sim7200_stop_scanning();
+            app_state_set_comm_idle_status(true);
             return 0;
 
         case BLE_GAP_EVENT_CONN_UPDATE:
             ESP_LOGI(TAG, "connection updated; status=%d", event->conn_update.status);
-            rc_chk(ble_gap_conn_find(event->connect.conn_handle, &desc), "ble_gap_conn_find");
+            rc_chk(ble_gap_conn_find(event->connect.conn_handle, &desc), "ble_gap_conn_find", ble_err_to_name);
             return 0;
 
         case BLE_GAP_EVENT_ADV_COMPLETE:
@@ -144,7 +150,7 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
         case BLE_GAP_EVENT_ENC_CHANGE:
             /* Encryption has been enabled or disabled for this connection. */
             ESP_LOGI(TAG, "encryption change event; status=%d ", event->enc_change.status);
-            rc_chk(ble_gap_conn_find(event->enc_change.conn_handle, &desc), "ble_gap_conn_find");
+            rc_chk(ble_gap_conn_find(event->enc_change.conn_handle, &desc), "ble_gap_conn_find", ble_err_to_name);
             return 0;
 
         case BLE_GAP_EVENT_NOTIFY_TX:
@@ -176,7 +182,7 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
             return 0;
 
         case BLE_GAP_EVENT_REPEAT_PAIRING:
-            rc_chk(ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc), "ble_gap_conn_find");
+            rc_chk(ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc), "ble_gap_conn_find", ble_err_to_name);
             ble_store_util_delete_peer(&desc.peer_id_addr);
             return BLE_GAP_REPEAT_PAIRING_RETRY;
 
@@ -187,13 +193,14 @@ static int gap_event(struct ble_gap_event *event, void *arg) {
 
 #ifdef USE_2M_PHY
         case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
-            rc_chk(ble_gap_read_le_phy(conn_handle, &tx_phy, &rx_phy), "ble_gap_read_le_phy");
+            rc_chk(ble_gap_read_le_phy(conn_handle, &tx_phy, &rx_phy), "ble_gap_read_le_phy", ble_err_to_name);
             ESP_LOGI(TAG, "phy update complete tx_phy: %02X, rx_phy: %02X", tx_phy, rx_phy);
             if ((tx_phy & BLE_HCI_LE_PHY_2M_PREF_MASK) && (rx_phy & BLE_HCI_LE_PHY_2M_PREF_MASK)) {
                 s_current_phy = BLE_HCI_LE_PHY_2M_PREF_MASK;
             }
             return 0;
 #endif
+
         default:
             ESP_LOGW(TAG, "unhandled gap_event %d", event->type);
             return 0;
@@ -236,4 +243,8 @@ void ble_app_init() {
 
 void ble_app_send_msg(msg_t *msg) {
     gatt_svr_notify(conn_handle, msg);
+}
+
+void ble_app_deinit(void) {
+
 }
