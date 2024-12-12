@@ -3,7 +3,8 @@
 
 Bluetooth: https://bluetooth.com
 
-BLE 2M PHY: https://github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/ble_phy/phy_prph/tutorial/Ble_Phy_Peripheral_Example_Walkthrough.md
+BLE 2M
+PHY: https://github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/ble_phy/phy_prph/tutorial/Ble_Phy_Peripheral_Example_Walkthrough.md
 
 Deep Sleep: https://github.com/espressif/esp-idf/blob/master/examples/system/deep_sleep/README.md
 
@@ -13,6 +14,7 @@ OTA: https://github.com/espressif/esp-idf/blob/master/examples/system/ota/README
 
 BQ27742-G1: https://www.ti.com/lit/ds/symlink/bq27742-g1.pdf
 https://www.ti.com/lit/ug/sluuax0c/sluuax0c.pdf?ts=1718563280100
+https://www.ti.com/lit/an/slua467b/slua467b.pdf?ts=1722969672876&ref_url=https%253A%252F%252Fwww.google.com%252F
 
 ### Performance improvements:
 
@@ -61,7 +63,8 @@ https://www.ti.com/lit/ug/sluuax0c/sluuax0c.pdf?ts=1718563280100
 ### Changes:
 
 ##### [⚠️ Antenna Ports config is remaining] ✅ Initialise the reader upon power on (Boot firmware, Baud rate, protocol config, antenna ports)
-Get connected antennas - works with closed loop antennas only 
+
+Get connected antennas - works with closed loop antennas only
 Set connected antennas read / write power
 
 ### Programming R&D
@@ -84,7 +87,7 @@ Two Way Communication (Client <=> Reader <=> rfid module)
               \__ __\    |     /
                   comm interface              <-- Generic Communication Interface
                     /          \
-               Peripheral       RF            <-- Command Type
+                  prphs       RF              <-- Command Type
 
 | Header | Command Type |
 |--------|--------------|
@@ -141,6 +144,12 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | Set Device Name           | 00     | 0C       | 08           |             | 52 66 69 64 52 65 61 64 65 72 2D 31 |                                                                              |
 |                           | 00     | 0C       | 08           | 00 00       | 52 66 69 64 52 65 61 64 65 72 2D 31 |                                                                              |
 |                           |        |          |              |             |                                     |                                                                              |
+| Get Debug Mode            | 00     | 00       | 0D           |             |                                     |                                                                              |
+|                           | 00     | 01       | 0D           | 00 00       | 00                                  |                                                                              |
+|                           |        |          |              |             |                                     |                                                                              |
+| Set Debug Mode            | 00     | 01       | 0D           | 01          |                                     | 00 - False, 01 - True                                                        |
+|                           | 00     | 01       | 0D           | 00 00       | 01                                  |                                                                              |
+|                           |        |          |              |             |                                     |                                                                              |
 | Get Error Display Mode    | 00     | 00       | 0A           |             |                                     |                                                                              |
 |                           | 00     | 01       | 0A           | 00 00       | 01                                  |                                                                              |
 |                           |        |          |              |             |                                     |                                                                              |
@@ -165,6 +174,15 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | Set BTN Release Action    | 00     | 05       | B3           |             | FF 00 03 1D 0C                      |                                                                              |
 |                           | 00     | 05       | B3           | 00 00       | FF 00 03 1D 0C                      |                                                                              |
 |                           |        |          |              |             |                                     |                                                                              |
+| Get Battery SOC           | 00     | 00       | BA           |             |                                     |                                                                              |
+|                           | 00     | 01       | BA           | 00 00       | 64                                  |                                                                              |
+|                           |        |          |              |             |                                     |                                                                              |
+| Get Battery SOH           | 00     | 00       | BB           |             |                                     |                                                                              |
+|                           | 00     | 01       | BB           | 00 00       | 64                                  |                                                                              |
+|                           |        |          |              |             |                                     |                                                                              |
+| Get Battery Cycle Count   | 00     | 00       | BC           |             |                                     |                                                                              |
+|                           | 00     | 01       | BC           | 00 00       | 08                                  |                                                                              |
+|                           |        |          |              |             |                                     |                                                                              |
 | Factory Reset             | 00     | 00       | FD           |             |                                     |                                                                              |
 |                           |        |          |              |             |                                     |                                                                              |
 | Reboot                    | 00     | 00       | FE           |             |                                     |                                                                              |
@@ -180,7 +198,7 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | usb app              |        |                                                                       |
 | wifi app             | ✅      |                                                                       |
 | ota                  |        |                                                                       |
-| battery              |        |                                                                       |
+| battery              |        | need to test whether integration is correct or not                    |
 | buttons              | ✅      | fast single clicks are not recorded                                   |
 | buzzer               | ✅      |                                                                       |
 | fan                  | ✅      |                                                                       |
@@ -191,5 +209,5 @@ Two Way Communication (Client <=> Reader <=> rfid module)
 | uart                 | ✅      |                                                                       |
 | www                  |        | need to make ez-controller functional                                 |
 
-set baud rate to 115200: FF 14 AA 4D 6F 64 75 6C 65 74 65 63 68 AA 40 06 01 00 01 C2 00 B4 BB 9D EB 
+set baud rate to 115200: FF 14 AA 4D 6F 64 75 6C 65 74 65 63 68 AA 40 06 01 00 01 C2 00 B4 BB 9D EB
 set baud rate to 921600: FF 14 AA 4D 6F 64 75 6C 65 74 65 63 68 AA 40 06 01 00 0E 10 00 0F BB 79 9F 
