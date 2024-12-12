@@ -16,7 +16,6 @@
 
 #define BUF_SIZE 2048
 
-
 static const char TAG[] = "http_server";
 
 static httpd_handle_t http_server_handle = NULL;
@@ -203,7 +202,7 @@ static void ws_task(void *pvParameters) {
         memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
         ws_pkt.type = HTTPD_WS_TYPE_TEXT;
 
-        if (xQueueReceive(http_msg_queue, &response, pdMS_TO_TICKS(60 * 1000)) == pdPASS) {
+        if (xQueueReceive(http_msg_queue, &response, pdMS_TO_TICKS(60000)) == pdPASS) {
             char *hex_str;
             size_t hex_str_len = 0;
             uint8_arr_to_hex_str(response.data, response.len, &hex_str, &hex_str_len);
@@ -225,10 +224,10 @@ static void ws_task(void *pvParameters) {
 
             httpd_queue_work(resp_arg->hd, ws_async_send, resp_arg);
 
-            // Currently there is no way to determine if socket is disconnected
-            // So, in case of time out occurs
-            // We assume that it is due to:
-            // - Disconnection of websocket from client side
+            /// Currently there is no way to determine if socket is disconnected
+            /// So, in case of time out occurs
+            /// We assume that it is due to:
+            /// - Disconnection of websocket from client side
             ESP_LOGW(TAG, "Deleting ws_task");
             delete_ws_task();
         }
