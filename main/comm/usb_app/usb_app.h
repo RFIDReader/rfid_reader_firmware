@@ -28,6 +28,7 @@ enum {
 
 extern esp_event_loop_handle_t usb_app_event_handle;
 
-void usb_app_init();
+void usb_app_init(void),
+        usb_app_deinit(void);
 
 #endif //RFID_READER_USB_APP_H
