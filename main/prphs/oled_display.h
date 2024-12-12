@@ -31,9 +31,6 @@
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
 
-#define OLED_SDA_GPIO GPIO_NUM_3
-#define OLED_SCL_GPIO GPIO_NUM_2
-
 #endif
 
 typedef struct {

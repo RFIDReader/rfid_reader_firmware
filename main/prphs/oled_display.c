@@ -4,6 +4,8 @@
 
 #include "oled_display.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+
 #include "esp_log.h"
 #include "esp_event.h"
 
@@ -356,7 +358,36 @@ void display_handle_button_events(void *handler_arg, esp_event_base_t base, int3
     refresh_ui();
 }
 
+
+void navigate_back() {
+    menu_history_t *last_history = pop_menu(history);
+    if (last_history) {
+        current_menu = last_history->menu;
+        state.current_menu_focus_pos = last_history->focus_pos;
+        state.current_menu_len = calculate_menu_length(current_menu);
+    }
+    refresh_ui();
+}
+
+void push_menu(menu_history_t *history, menu_t *menu, uint8_t focus_pos) {
+    if (history_top < 3) {
+        history_top++;
+        history[history_top].menu = menu;
+        history[history_top].focus_pos = focus_pos;
+    }
+}
+
+menu_history_t *pop_menu(menu_history_t *history) {
+    if (history_top >= 0) {
+        return &history[history_top--];
+    }
+    return NULL;
+}
+
+#endif
+
 void oled_display_init() {
+#ifdef CONFIG_IDF_TARGET_ESP32
     ESP_LOGI(TAG, "display_init");
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
@@ -391,31 +422,5 @@ void oled_display_init() {
                                     ESP_EVENT_ANY_ID,
                                     display_handle_button_events,
                                     NULL);
+#endif
 }
-
-void navigate_back() {
-    menu_history_t *last_history = pop_menu(history);
-    if (last_history) {
-        current_menu = last_history->menu;
-        state.current_menu_focus_pos = last_history->focus_pos;
-        state.current_menu_len = calculate_menu_length(current_menu);
-    }
-    refresh_ui();
-}
-
-void push_menu(menu_history_t *history, menu_t *menu, uint8_t focus_pos) {
-    if (history_top < 3) {
-        history_top++;
-        history[history_top].menu = menu;
-        history[history_top].focus_pos = focus_pos;
-    }
-}
-
-menu_history_t *pop_menu(menu_history_t *history) {
-    if (history_top >= 0) {
-        return &history[history_top--];
-    }
-    return NULL;
-}
-
-
