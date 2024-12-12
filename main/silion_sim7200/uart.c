@@ -14,6 +14,7 @@
 
 static const char TAG[] = "uart";
 
+TaskHandle_t uart_task_handle;
 static QueueHandle_t uart2_queue;
 
 static const int BUF_SIZE = 512;
@@ -21,12 +22,14 @@ static const int BUF_SIZE = 512;
 static void rx_task(void *pvParameters);
 
 bool test_uart_comm(void);
+
 int uart_detect_baud_rate(void);
+
 bool uart_check_baud_rate(int baud_rate);
 
 void uart_init(void) {
     int baud_rate = uart_detect_baud_rate();
-    if(baud_rate == -1) {
+    if (baud_rate == -1) {
         ESP_LOGE(TAG, "Failed to detect baud rate");
     }
 
@@ -41,11 +44,17 @@ void uart_init(void) {
                             UART_COMM_TASK_STACK_SIZE,
                             NULL,
                             UART_COMM_TASK_PRIORITY,
-                            NULL,
+                            &uart_task_handle,
                             UART_COMM_TASK_CORE_ID);
 }
 
 void uart_deinit(void) {
+    vTaskDelete(uart_task_handle);
+    uart_flush_input(UART);
+    uart_driver_delete(UART);
+}
+
+void _uart_deinit(void) {
     uart_flush_input(UART);
     uart_driver_delete(UART);
 }
@@ -128,14 +137,14 @@ int uart_detect_baud_rate(void) {
     int baud_rate = 115200;
     bool result = uart_check_baud_rate(baud_rate);
     if (!result) {
-        uart_deinit();
+        _uart_deinit();
         baud_rate = 921600;
         result = uart_check_baud_rate(baud_rate);
         if (!result) {
             baud_rate = -1;
         }
     }
-    uart_deinit();
+    _uart_deinit();
     return baud_rate;
 }
 

@@ -15,7 +15,6 @@
 #define TXD_PIN GPIO_NUM_17
 #define RXD_PIN GPIO_NUM_18
 
-
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 
 #define UART UART_NUM_2
@@ -35,7 +34,8 @@ static uart_config_t uart_config = {
         .source_clk = UART_SCLK_DEFAULT,
 };
 
-void uart_init();
+void uart_init(void),
+        uart_deinit(void);
 
 void uart_write(msg_t *msg);
 
