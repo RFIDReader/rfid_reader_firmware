@@ -13,6 +13,12 @@ static const char TAG[] = "app_state_dispatcher";
 
 ESP_EVENT_DEFINE_BASE(APP_STATE_EVENTS);
 
+bool comm_idle = false;
+bool buttons_idle = false;
+bool rfid_idle = false;
+bool idle = false;
+TimerHandle_t idle_timer;
+
 app_state_t app_state;
 esp_event_loop_handle_t app_state_event_handle;
 
@@ -91,9 +97,67 @@ void app_state_dispatch_init_state() {
 }
 
 void app_state_dispatch_op_state() {
-    ESP_LOGI(TAG, "app_state_enter_ready_state");
+    ESP_LOGI(TAG, "app_state_enter_op_state");
     if (app_state == APP_STATE_INITIALIZATION)
         dispatch(APP_STATE_OPERATIONAL);
     else
         ESP_LOGE(TAG, "cannot enter OPERATIONAL state, current state is %d", app_state);
+}
+
+void app_state_dispatch_idle_state() {
+    ESP_LOGI(TAG, "app_state_enter_idle_state");
+    dispatch(APP_STATE_IDLE_WARNING);
+}
+
+void app_state_dispatch_deinit_state() {
+    ESP_LOGI(TAG, "app_state_enter_deinit_state");
+    dispatch(APP_STATE_DEINITIALIZATION);
+}
+
+void app_state_dispatch_sleeping_state() {
+    ESP_LOGI(TAG, "app_state_enter_sleeping_state");
+    dispatch(APP_STATE_SLEEPING);
+}
+
+void tmr_dispatch_idle_state(TimerHandle_t xTimer) {
+    ESP_LOGI(TAG, "tmr_dispatch_idle_state");
+    app_state_dispatch_idle_state();
+}
+
+void app_state_update_global_idle_status(void) {
+    ESP_LOGI(TAG, "app_state_update_global_idle_status");
+    idle = comm_idle & buttons_idle & rfid_idle;
+    if (idle) {
+        ESP_LOGI(TAG, "idle: setting timer to enter idle state");
+        idle_timer = xTimerCreate(
+                "idle_tmr",
+                pdMS_TO_TICKS(10000),
+                pdFALSE,
+                (void *) 0,
+                tmr_dispatch_idle_state);
+    } else {
+        ESP_LOGI(TAG, "not idle");
+        if(xTimerIsTimerActive(idle_timer)) {
+            ESP_LOGI(TAG, "deleting timer to enter idle state");
+            xTimerDelete(idle_timer, pdMS_TO_TICKS(1));
+        }
+    }
+}
+
+void app_state_set_comm_idle_status(bool status) {
+    ESP_LOGI(TAG, "app_state_set_comm_idle_status");
+    comm_idle = status;
+    app_state_update_global_idle_status();
+}
+
+void app_state_set_buttons_idle_status(bool status) {
+    ESP_LOGI(TAG, "app_state_set_buttons_idle_status");
+    buttons_idle = status;
+    app_state_update_global_idle_status();
+}
+
+void app_state_set_rfid_idle_status(bool status) {
+    ESP_LOGI(TAG, "app_state_set_rfid_idle_status");
+    rfid_idle = status;
+    app_state_update_global_idle_status();
 }
