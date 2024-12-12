@@ -46,13 +46,14 @@ void silion_sim7200_init() {
     esp_event_loop_create(&loop_args, &silion_sim7200_event_handle);
 }
 
+void silion_sim7200_deinit() {
+    uart_deinit();
+}
+
 void silion_sim7200_boot_firmware(void) {
     // boot firmware
     uint8_t boot_firmware_data[] = {0xFF, 0x00, 0x04, 0x1D, 0x0B};
-    msg_t boot_firmware = {
-            .data = boot_firmware_data,
-            .len = 5,
-    };
+    msg_t boot_firmware = {boot_firmware_data, 5};
     uart_write(&boot_firmware);
 }
 
@@ -71,7 +72,7 @@ void silion_sim7200_set_baud_rate(int baud_rate) {
     }
 
     uint8_t sub_command[8] = {0xAA, 0x40, 0x06, 0x01, baud_rate_hex[0], baud_rate_hex[1], baud_rate_hex[2],
-                             baud_rate_hex[3]};
+                              baud_rate_hex[3]};
     uint8_t subCrc = GetSubCRC(sub_command, 8);
     uint8_t p = 0;
     uint8_t cmd[255] = {0};
@@ -94,18 +95,12 @@ void silion_sim7200_set_baud_rate(int baud_rate) {
     printf("set baud rate: ");
     print_hex_arr(cmd, p);
 
-    msg_t msg = {
-            .data = cmd,
-            .len = p,
-    };
+    msg_t msg = {cmd, p};
     uart_write(&msg);
 }
 
 void silion_sim7200_stop_scanning(void) {
     uint8_t tmp_cmd[] = {0xFF, 0x00, 0x03, 0x1D, 0x0C};
-    msg_t tmp_msg = {
-            .data = tmp_cmd,
-            .len = 5,
-    };
+    msg_t tmp_msg = {tmp_cmd, 5};
     uart_write(&tmp_msg);
 }
