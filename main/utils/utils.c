@@ -6,6 +6,7 @@
 #include <esp_err.h>
 #include <esp_mac.h>
 #include <esp_log.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -42,11 +43,15 @@ uint8_t GetSubCRC(uint8_t *msgbuf, int msglen) {
     return (unsigned char) (temp & 0x000000ff);
 }
 
-void rc_chk(int rc, char *msg) {
+void rc_chk(int rc, char *msg, char **err_to_name) {
     if (rc == 0) {
         ESP_LOGD("rc_chk", "%s -> %d", msg, rc);
     } else {
-        ESP_LOGE("rc_chk", "%s -> %d", msg, rc);
+        if (err_to_name != NULL && err_to_name[rc] != NULL) {
+            ESP_LOGE("rc_chk", "%s -> %d (%s)", msg, rc, err_to_name[rc]);
+        } else {
+            ESP_LOGE("rc_chk", "%s -> %d", msg, rc);
+        }
     }
 }
 
@@ -103,4 +108,65 @@ void get_mac_addr(uint8_t wifi_sta_mac_addr[6], uint8_t wifi_soft_ap_mac_addr[6]
     ESP_ERROR_CHECK(esp_read_mac(wifi_soft_ap_mac_addr, ESP_MAC_WIFI_SOFTAP));
 
     ESP_ERROR_CHECK(esp_read_mac(bt_mac_addr, ESP_MAC_BT));
+}
+
+//msg_t *merge_msg(msg_t *msg1, msg_t *msg2) {
+//    size_t len = msg1->len + msg2->len;
+//    uint8_t *data = (uint8_t *) malloc(sizeof(uint8_t) * len);
+//    memcpy(data, msg1->data, msg1->len);
+//    memcpy(data + msg1->len, msg2->data, msg2->len);
+//
+//    msg_t *msg = (msg_t *) malloc(sizeof(msg_t));
+//    msg->data = data;
+//    msg->len = len;
+//
+//    return msg;
+//}
+//
+//void free_msg(msg_t *msg) {
+//    if (msg == NULL) {
+//        return;
+//    }
+//    free(msg->data);
+//    free(msg);
+//}
+
+msg_t *merge_msgs(msg_t *msgs[], int num_msgs) {
+    // Calculate total length of the merged data
+    size_t total_len = 0;
+    for (int i = 0; i < num_msgs; i++) {
+        total_len += msgs[i]->len;
+    }
+
+    // Allocate memory for the merged data
+    uint8_t *data = (uint8_t *) malloc(total_len);
+    if (data == NULL) {
+        return NULL;  // Handle memory allocation failure
+    }
+
+    // Copy each message's data into the merged buffer
+    size_t offset = 0;
+    for (int i = 0; i < num_msgs; i++) {
+        memcpy(data + offset, msgs[i]->data, msgs[i]->len);
+        offset += msgs[i]->len;
+    }
+
+    // Allocate memory for the merged message structure
+    msg_t *merged_msg = (msg_t *) malloc(sizeof(msg_t));
+    if (merged_msg == NULL) {
+        free(data);  // Clean up allocated data on failure
+        return NULL;
+    }
+    merged_msg->data = data;
+    merged_msg->len = total_len;
+
+    return merged_msg;
+}
+
+void free_msg(msg_t *msg) {
+    if (msg == NULL) {
+        return;
+    }
+    free(msg->data);
+    free(msg);
 }
