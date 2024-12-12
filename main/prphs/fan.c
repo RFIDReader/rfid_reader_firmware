@@ -63,3 +63,9 @@ void fan_init(void) {
     esp_event_handler_register_with(comm_event_handle, COMM_EVENTS, ESP_EVENT_ANY_ID, fan_handle_comm_events, NULL);
 #endif
 }
+
+void fan_deinit(void) {
+#ifdef FAN_SUPPORTED
+    esp_event_handler_unregister_with(comm_event_handle, COMM_EVENTS, ESP_EVENT_ANY_ID, fan_handle_comm_events);
+#endif
+}
