@@ -3,6 +3,7 @@
 #include "nvs_flash.h"
 #include "esp_log.h"
 #include "esp_event.h"
+#include "esp_sleep.h"
 
 #include "settings.h"
 #include "buttons.h"
@@ -18,9 +19,12 @@
 #include "tasks_common.h"
 #include "battery.h"
 #include "usb_app.h"
+#include "utils.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32S3
+
 #include "tft_display.h"
+
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 
 #include "oled_display.h"
@@ -35,7 +39,7 @@ void dispatch_to_op(void *pvParameter) {
     vTaskDelete(NULL);
 }
 
-void init(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+void init(/*void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data*/) {
     switch (settings.comm_mode) {
         case COMM_MODE_BLE:
             ble_app_init();
@@ -85,6 +89,39 @@ void init(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void
                             TEMP_TASK_CORE_ID);
 }
 
+void deinit() {
+
+}
+
+void warn_shutdown(/*void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data*/) {
+    for (uint8_t i = 0; i < 30; ++i) {
+        buzzer_on(25);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    buzzer_on(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
+}
+
+void handle_app_state(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    switch (event_id) {
+        case APP_STATE_INITIALIZATION:
+            init();
+            break;
+        case APP_STATE_OPERATIONAL:
+            break;
+        case APP_STATE_IDLE_WARNING:
+            warn_shutdown();
+            break;
+        case APP_STATE_DEINITIALIZATION:
+            deinit();
+            break;
+        case APP_STATE_SLEEPING:
+            esp_sleep_enable_ext0_wakeup(OK_BTN_GPIO, 0);
+            vTaskDelay(pdMS_TO_TICKS(1));
+            esp_deep_sleep_start();
+    }
+}
+
 void app_main(void) {
     esp_err_t ret;
     ret = nvs_flash_init();
@@ -115,8 +152,7 @@ void app_main(void) {
     oled_display_init();
 #endif
 
-    esp_event_handler_register_with(app_state_event_handle, APP_STATE_EVENTS, APP_STATE_INITIALIZATION, init, NULL);
-
+    esp_event_handler_register_with(app_state_event_handle, APP_STATE_EVENTS, ESP_EVENT_ANY_ID, handle_app_state, NULL);
 //    struct timeval t;
 //    gettimeofday(&t, NULL);
 //    ESP_LOGI(TAG, "system time: %lld", t.tv_sec);
@@ -127,4 +163,9 @@ void app_main(void) {
     ESP_LOGI(TAG, ".alert_notification %d", settings.alert_notification);
     ESP_LOGI(TAG, ".tag_display_mode %d", settings.tag_display_mode);
     ESP_LOGI(TAG, ".device_name %s", settings.device_name);
+    ESP_LOGI(TAG, ".btn_click_action %02X", settings.btn_click_action);
+//    ESP_LOGI(TAG, ".btn_press_action: ");
+//    print_hex_arr(settings.btn_press_action, settings.btn_press_action[0] + 1);
+//    ESP_LOGI(TAG, ".btn_release_action: ");
+//    print_hex_arr(settings.btn_release_action, settings.btn_release_action[0] + 1);
 }
