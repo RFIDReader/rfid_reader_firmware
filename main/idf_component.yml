@@ -1,9 +1,25 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  espressif/ssd1306:
-    version: "^1.0.5~1"
+
+  espressif/esp_tinyusb:
+    version: "~1.0.0"
     rules:
-    - if: "target == esp32"
+      - if: "target == esp32s3"
+
+#  lvgl/lvgl:
+#    version: "^9.1.0"
+#    rules:
+#    - if: "target == esp32s3"
+#
+#  espressif/esp_lvgl_port:
+#    version: "^2.3.1"
+#    rules:
+#      - if: "target == esp32s3"
+#
+#  espressif/ssd1306:
+#    version: "^1.0.5~1"
+#    rules:
+#    - if: "target == esp32"
 
   espressif/led_strip:
     version: "^2.5.3"
