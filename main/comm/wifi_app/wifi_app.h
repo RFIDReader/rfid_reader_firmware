@@ -42,6 +42,7 @@ extern esp_netif_t *esp_netif_ap;
 
 void wifi_app_start(void),
         wifi_app_ap_start(void),
-        wifi_app_sta_start(void);
+        wifi_app_sta_start(void),
+        wifi_app_stop(void);
 
 #endif //RFID_READER_WIFI_APP_H

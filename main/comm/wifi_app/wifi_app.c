@@ -14,6 +14,7 @@
 #include "mdns.h"
 #include "comm_if.h"
 #include "silion_sim7200.h"
+#include "app_state_disp.h"
 
 static const char TAG[] = "wifi_app";
 
@@ -82,6 +83,7 @@ static void wifi_app_event_handler(void *args, esp_event_base_t event_base, int3
                               NULL,
                               0,
                               portMAX_DELAY);
+            app_state_set_comm_idle_status(post_event_id == WIFI_APP_DISCONNECTED);
         }
 
     } else if (event_base == IP_EVENT) {
@@ -208,4 +210,8 @@ void wifi_app_start(void) {
         ESP_LOGE(TAG, "MDNS Init failed: %d\n", err);
     }
     mdns_hostname_set(settings.device_name);
+}
+
+void wifi_app_stop(void) {
+
 }
