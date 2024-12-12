@@ -31,11 +31,15 @@
 #define SYSTEM_DEVICE_NAME "sys.name"
 
 #define SYSTEM_BTN_CLICK_ACTION "sys.btn.click"
-#define SYSTEM_BTN_CLICK_NO_ACTION 0x00
-#define SYSTEM_BTN_CLICK_ACTION_NOTIFY 0x01
+#define SYSTEM_BTN_CLICK_NO_ACTION 0
+#define SYSTEM_BTN_CLICK_ACTION_NOTIFY 1
 
 #define SYSTEM_BTN_PRESS_ACTION "sys.btn.press"
 #define SYSTEM_BTN_RELEASE_ACTION "sys.btn.release"
+
+#define DEBUG_MODE "debug"
+#define DEBUG_MODE_DISABLED 0
+#define DEBUG_MODE_ENABLED 1
 
 typedef struct {
     uint8_t comm_mode;

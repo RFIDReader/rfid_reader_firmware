@@ -150,6 +150,11 @@ void settings_init() {
                 settings_set_blob(SYSTEM_BTN_PRESS_ACTION, btn_press_action, btn_press_action_size);
                 settings.btn_press_action = btn_press_action;
                 break;
+            case ESP_ERR_NVS_INVALID_LENGTH:
+                ESP_LOGE(TAG, "error reading value %s\ncalling nvs_erase_key", esp_err_to_name(err));
+                nvs_erase_key(settings_handle, SYSTEM_BTN_PRESS_ACTION);
+                settings.btn_press_action = btn_press_action;
+                break;
             default:
                 ESP_LOGE(TAG, "error reading value %s", esp_err_to_name(err));
         }
@@ -168,6 +173,11 @@ void settings_init() {
                 break;
             case ESP_ERR_NVS_NOT_FOUND:
                 settings_set_blob(SYSTEM_BTN_RELEASE_ACTION, btn_release_action, btn_press_action_size);
+                settings.btn_release_action = btn_release_action;
+                break;
+            case ESP_ERR_NVS_INVALID_LENGTH:
+                ESP_LOGE(TAG, "error reading value %s\ncalling nvs_erase_key", esp_err_to_name(err));
+                nvs_erase_key(settings_handle, SYSTEM_BTN_RELEASE_ACTION);
                 settings.btn_release_action = btn_release_action;
                 break;
             default:
